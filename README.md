@@ -1,6 +1,8 @@
 # facial_recog_bias_survey
 Done as part of a capstone project to examine bias within the field of facial recognition, and produce recommendations for the future.
 
+Algorithm citations can be found in the citations list below. Datasets used with algorithms can be found in the appendix below as well.
+
 # Citations
 Atay, M., Gipson, H., Gwyn, T., & Roy, K. (2021). Evaluation of Gender Bias in Facial Recognition with Traditional Machine Learning Algorithms. In 2021 IEEE Symposium Series on Computational Intelligence (SSCI) (pp. 1-7). 
 
