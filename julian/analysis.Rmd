@@ -1,0 +1,272 @@
+---
+title: "DS 440 Capstone"
+output: html_notebook
+---
+
+# Environment Setup
+
+```{r include = FALSE}
+# clear environment
+rm(list = ls())
+
+# library calls
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(xlsx)
+```
+
+```{r}
+# set working directory
+setwd("C:/Users/Julian/ds440/FairFace/")
+```
+
+
+```{r include = FALSE}
+groundtruth <- read_csv("groundtruth.csv")
+outputs <- read_csv("outputs.csv")
+```
+
+```{r}
+fileparse_outputs <- function(x) {
+  a <- substr(x, 1, nchar(x) - 5)
+  a <- sub('@', '100', a) # because R is a lunatic
+  a <- parse_number(a)
+  return(a)
+}
+
+outputs$face_name_align <- sapply(outputs$face_name_align, fileparse_outputs)
+outputs <- outputs[1:5]
+
+groundtruth$file <- sapply(groundtruth$file, parse_number)
+groundtruth <- groundtruth[1:4]
+colnames(groundtruth) <- c("file", "true_age", "true_gender", "true_race")
+```
+
+
+```{r}
+summ <- left_join(outputs, groundtruth, by = c("face_name_align" = "file"))
+
+parse_age <- function(x) {
+  a <- ifelse(x == "more than 70", "70+", x)
+  a <- ifelse(a == "19-Oct", "10-19", a)
+  a <- ifelse(a == "9-Mar", "3-9", a)
+  return(a)
+}
+
+summ$true_age <- sapply(summ$true_age, parse_age)
+```
+
+```{r}
+summ <-
+  summ %>%
+  mutate(age_correct = ifelse(age == true_age, 1, 0),
+         gender_correct = ifelse(gender == true_gender, 1, 0),
+         race_correct = ifelse(race == true_race, 1, 0),
+         all_correct = age_correct * gender_correct * race_correct)
+```
+
+```{r}
+
+sum(summ$age_correct)/943
+
+sum(summ$gender_correct)/943
+
+sum(summ$race_correct)/943
+
+sum(summ$all_correct)/943
+```
+# Graphs
+
+```{r}
+# main graph
+summ %>%
+  group_by(race) %>%
+  summarize(amt = sum(race_correct), tot = n()) %>%
+  mutate(pct = amt/tot) %>%
+  ggplot(aes(x = factor(race), y = pct)) +
+         geom_col(aes(fill = factor(race))) +
+    theme(
+        # label stylings
+        axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1),
+        plot.title = element_text(size = 15, face = "bold", hjust = 0.5)) +
+    theme(
+        # legend stylings
+        legend.box.background = element_rect(color = "black", size = 2)) +
+    labs(title = "Percentage Matched Correctly Across Races", 
+         x = "Race", y = "Pct",
+         fill = "Race")
+```
+# Gender
+```{r}
+# Females
+# TP, TN, FP, FN
+tp <- dim(summ[summ$gender == summ$true_gender & summ$true_gender == "Female",])[1]
+tn <- dim(summ[summ$gender == summ$true_gender & summ$true_gender != "Female",])[1]
+fp <- dim(summ[summ$gender != summ$true_gender & summ$true_gender != "Female",])[1]
+fn <- dim(summ[summ$gender != summ$true_gender & summ$true_gender == "Female",])[1]
+tot <- 943
+
+# acc
+(tp + tn)/943
+# prec
+tp/(tp + fp)
+# rec
+tp/(tp + fn)
+```
+
+```{r}
+# Males
+# TP, TN, FP, FN
+tp <- dim(summ[summ$gender == summ$true_gender & summ$true_gender == "Male",])[1]
+tn <- dim(summ[summ$gender == summ$true_gender & summ$true_gender != "Male",])[1]
+fp <- dim(summ[summ$gender != summ$true_gender & summ$true_gender != "Male",])[1]
+fn <- dim(summ[summ$gender != summ$true_gender & summ$true_gender == "Male",])[1]
+tot <- 943
+
+# acc
+(tp + tn)/943
+# prec
+tp/(tp + fp)
+# rec
+tp/(tp + fn)
+```
+
+```{r}
+# disparate impact
+(tp/dim(summ[summ$true_gender == "Female",])[1])/
+  (tn/dim(summ[summ$true_gender == "Male",]))[1]
+```
+# Race
+```{r}
+# Black
+# TP, TN, FP, FN
+tp <- dim(summ[summ$race == summ$true_race & summ$true_race == "Black",])[1]
+tn <- dim(summ[summ$race == summ$true_race & summ$true_race != "Black",])[1]
+fp <- dim(summ[summ$race != summ$true_race & summ$true_race != "Black",])[1]
+fn <- dim(summ[summ$race != summ$true_race & summ$true_race == "Black",])[1]
+tot <- 943
+
+# acc
+(tp + tn)/943
+# prec
+tp/(tp + fp)
+# rec
+tp/(tp + fn)
+```
+
+```{r}
+iterable <- c("Male", "Female")
+n <- length(iterable)
+df <- data.frame("acc" = numeric(n), "prec" = numeric(n), "rec" = numeric(n), "di" = numeric(n), amt = numeric(n))
+rownames(df) <- iterable
+
+hyp <- summ$gender
+real <- summ$true_gender
+
+privilege <- "Male"
+
+i <- 1
+
+for (group in iterable) {
+  # TP, TN, FP, FN
+  tp <- dim(summ[hyp == real & real == group,])[1]
+  tn <- dim(summ[hyp == real & real != group,])[1]
+  fp <- dim(summ[hyp != real & real != group,])[1]
+  fn <- dim(summ[hyp != real & real == group,])[1]
+  count <- dim(summ[real == group,])[1]
+
+  df$acc[i] <- (tp + tn)/943
+  df$prec[i] <- tp/(tp + fp)
+  df$rec[i] <- tp/(tp + fn)
+  df$di[i] <- tp/count
+  df$amt[i] <- count
+  
+  i <- i + 1
+}
+
+a <- dim(summ[hyp == real & real == privilege,])[1]
+b <- dim(summ[real == privilege,])[1]
+
+df$di <- df$di/(a/b)
+
+write.csv(df, "gender_results.csv")
+```
+
+
+```{r}
+iterable <- c("Black", "East Asian", "Indian", "Latino_Hispanic", "Middle Eastern", "Southeast Asian", "White")
+n <- length(iterable)
+df <- data.frame("acc" = numeric(n), "prec" = numeric(n), "rec" = numeric(n), "di" = numeric(n), amt = numeric(n))
+rownames(df) <- iterable
+
+hyp <- summ$race
+real <- summ$true_race
+
+privilege <- "White"
+
+i <- 1
+
+for (group in iterable) {
+  # TP, TN, FP, FN
+  tp <- dim(summ[hyp == real & real == group,])[1]
+  tn <- dim(summ[hyp == real & real != group,])[1]
+  fp <- dim(summ[hyp != real & real != group,])[1]
+  fn <- dim(summ[hyp != real & real == group,])[1]
+  count <- dim(summ[real == group,])[1]
+
+  df$acc[i] <- (tp + tn)/943
+  df$prec[i] <- tp/(tp + fp)
+  df$rec[i] <- tp/(tp + fn)
+  df$di[i] <- tp/count
+  df$amt[i] <- count
+  
+  i <- i + 1
+}
+
+a <- dim(summ[hyp == real & real == privilege,])[1]
+b <- dim(summ[real == privilege,])[1]
+
+df$di <- df$di/(a/b)
+
+write.csv(df, "race_results.csv")
+```
+
+
+```{r}
+iterable <- c("0-2", "3-9", "10-19", "20-29", "30-39", "40-49", "50-59","60-69", "70+")
+n <- length(iterable)
+df <- data.frame("acc" = numeric(n), "prec" = numeric(n), "rec" = numeric(n), "di" = numeric(n), amt = numeric(n))
+i <- 1
+hyp <- summ$age
+privilege <- "20-29"
+real <- summ$true_age
+rownames(df) <- iterable
+
+for (group in iterable) {
+  # TP, TN, FP, FN
+  tp <- dim(summ[hyp == real & real == group,])[1]
+  tn <- dim(summ[hyp == real & real != group,])[1]
+  fp <- dim(summ[hyp != real & real != group,])[1]
+  fn <- dim(summ[hyp != real & real == group,])[1]
+  count <- dim(summ[real == group,])[1]
+
+  df$acc[i] <- (tp + tn)/943
+  df$prec[i] <- tp/(tp + fp)
+  df$rec[i] <- tp/(tp + fn)
+  df$di[i] <- tp/count
+  df$amt[i] <- count
+  
+  i <- i + 1
+}
+
+a <- dim(summ[hyp == real & real == privilege,])[1]
+b <- dim(summ[real == privilege,])[1]
+
+df$di <- df$di/(a/b)
+
+write.csv(df, "age_results.csv")
+```
+
+
+
