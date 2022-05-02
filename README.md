@@ -56,7 +56,11 @@ Xu T., White J., Kalkan S., Gunes H. (2020) Investigating Bias and Fairness in F
 
 # Appendix
 The UTKFace Dataset can be found at the following link: https://susanqq.github.io/UTKFace/  
+
 The Balanced Faces in the Wild Dataset can be found at this GitHub repository: GitHub - visionjo/facerec-bias-bfw: Source code and notebooks to reproduce experiments and benchmarks on Bias Faces in the Wild (BFW). 
+
 The Labeled Faces in the Wild Dataset can be found at the following link: https://tinyurl.com/a8kp9hux 
+
 The FairFace Dataset can be found at the following link: fairface-img-margin025-trainval.zip 
+
 The MS1MV2 Dataset can be found at the following link: faces_vgg_112x112.zip  
