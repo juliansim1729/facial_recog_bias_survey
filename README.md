@@ -20,6 +20,8 @@ Haridasan, A. (2020, October 7). Image Recognition Using ML (CNN). Medium. Retri
 
 Howard, J., Sirotin, Y., Tipton, J., Vemury, A. (2020). Quantifying the Extent to Which Race and Gender Features Determine Identity in Commercial Face Recognition Algorithms. Retrieved from https://arxiv.org/abs/2010.07979. 
 
+ivclab. (2020). ivclab/Online-Face-Recognition-and-Authentication. GitHub. Retrieved from https://github.com/ivclab/Online-Face-Recognition-and-Authentication
+
 Jung, S., An, J., Kwak, H., Salminen, J.O., & Jansen, B.J. (2018). Assessing the Accuracy of Four Popular Face Recognition Tools for Inferring Gender, Age, and Race. ICWSM. 
 
 Kim, H., Kim, H., & Hwang, E. (2019). Real-Time Facial Feature Extraction Scheme Using Cascaded Networks. In 2019 IEEE International Conference on Big Data and Smart Computing (BigComp). 2019 IEEE International Conference on Big Data and Smart Computing (BigComp). IEEE. https://doi.org/10.1109/bigcomp.2019.8679316
